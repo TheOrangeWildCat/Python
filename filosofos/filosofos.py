@@ -1,5 +1,3 @@
-# Dining Philosophers - Simple example with two philosophers and two chopsticks
-
 from multiprocessing import Process, Lock
 import random
 import time
@@ -13,31 +11,41 @@ def eat(eTime):
 
 
 def diningPhil(phil,ch1,ch2,rand):
+    print(ch1,ch2)
     # Start the philosopher
     print(phil, " is starting")                                 
     # Get random time for Thinking
     thinkTime = random.randint(0,rand)                             
     # Get random time for eating
     eatTime = random.randint(1,rand+1)
+    #get wait time
+    waitTime = random.randint(1, 5)
     # Think for random amount of time
     print(phil, " is thinking ", thinkTime, " seconds")
     think(thinkTime)
     # Ask for first chopstick
-    print(phil, " is asking for chopstick")
-    ch1.acquire()                                               
-    print(phil, " got chopstick")
+    print(phil, " is asking for chopstick 1")
+    st1 = ch1.acquire(block=True)                                                
+    print(phil, " got chopstick 1", ch1)
     think(1)
     # Ask for second chopstick
-    print(phil, " is asking for chopstick")                 
-    ch2.acquire()                                               
-    print(phil, " got chopstick")
+    print(phil, " is asking for chopstick 2")                 
+    st2 = ch2.acquire(block=True, timeout=1)                                               
+    print(phil, " got chopstick 2", ch2)
     # Once the philosopher has both chopsticks, eat
-    print(phil, " is eating ", eatTime, " seconds")
-    eat(eatTime)
+    print(ch1, ch2)
+    if st1 and st2:
+        print(phil, " is eating ", eatTime, " seconds")
+        eat(eatTime)
+    else:
+        print(phil, " is not eating ")
     # When finished eating, releast both chopsticks
     print(phil, " is releasing chopsticks")
-    ch1.release()                                               
-    ch2.release()
+    if st1:
+        ch1.release()                                               
+    if st2:
+        ch2.release()
+
     print(phil," is finished")
     
 # Main Program
