@@ -1,4 +1,4 @@
-from multiprocessing import Process, Lock
+from multiprocessing import Process, Semaphore
 import random
 import time
 
@@ -25,16 +25,14 @@ def diningPhil(phil,ch1,ch2,rand):
     think(thinkTime)
     # Ask for first chopstick
     print(phil, " is asking for chopstick 1")
-    st1 = ch1.acquire(block=True)                                                
+    st1 = ch1.acquire(block=True, timeout=waitTime)                                                
     print(phil, " got chopstick 1", ch1)
+    print(ch1,ch2)
     think(1)
     # Ask for second chopstick
     print(phil, " is asking for chopstick 2")                 
-    st2 = ch2.acquire(block=True, timeout=1)
-    # while st2 is not True:
-    #     time.sleep(1)                                               
-    #     st2 = ch2.acquire(block=True, timeout=1)
-    # print(phil, " got chopstick 2", ch2)
+    st2 = ch2.acquire(block=True, timeout= waitTime-1)                                               
+    print(phil, " got chopstick 2", ch2)
     # Once the philosopher has both chopsticks, eat
     print(ch1, ch2)
     if st1 and st2:
@@ -54,10 +52,10 @@ def diningPhil(phil,ch1,ch2,rand):
 # Main Program
 
 if __name__=='__main__':
-    # Create a lock that we call chopstick1
-    chopstick1 = Lock()
-    # Create another lock that we call chopstick2
-    chopstick2 = Lock()                                         
+    # Create a Semaphore that we call chopstick1
+    chopstick1 = Semaphore()
+    # Create another Semaphore that we call chopstick2
+    chopstick2 = Semaphore()                                         
     phil1 = "Aristotle"
     phil2 = "Plato"
     # Create process for philosopher Aristotle asking for chopstick1 and then chopstick2
