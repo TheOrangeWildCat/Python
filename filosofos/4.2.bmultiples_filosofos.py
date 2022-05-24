@@ -6,6 +6,9 @@ import random
 import time
 
 
+Chopstick = namedtuple("Chopstick", "semaforo name")  # * crear un objeto tipo chopstick
+
+
 class C(enum.Enum):
     Green = "\u001b[32m"
     Magenta = "\u001b[35m"
@@ -17,12 +20,11 @@ class C(enum.Enum):
     Reset = "\u001b[0m"
     # Black = "\u001b[30m"
 
-Chopstick = namedtuple("Chopstick", "semaforo name")
 
-class Philosopher():
-    
-
-    def __init__(self, name, color: C, right_chopstick: Chopstick, left_chopstick: Chopstick):
+class Philosopher:
+    def __init__(
+        self, name, color: C, right_chopstick: Chopstick, left_chopstick: Chopstick
+    ):
         self.name = name
         self.color = color
         self.right_chopstick = right_chopstick
@@ -38,25 +40,20 @@ class Philosopher():
     def _acquire_chopsticks(self) -> bool:
         # TODO: Wait for right chopstick.
         x = self.right_chopstick.semaforo.acquire()
-        print(f'right chpstick {self.right_chopstick.name} {x}')
+        self.log(f"right chpstick {self.right_chopstick.name} {x}")
         # TODO: Get the left chopstick or release the right one.
         y = self.left_chopstick.semaforo.acquire()
-        print(f'left chopstick {self.left_chopstick.name} , {y}')
-        if x and y:
+        self.log(f"left chopstick {self.left_chopstick.name} , {y}")
+        if x and y:  # * si se asignaron los dos palillos retorna True
             return True
-        else:
-            self.right_chopstick.release()
-            print(f'Releasing {self.right_chopstick.name}')
-            return False
-
-       
-        
 
     def _release_chopsticks(self):
         self.log("Releasing chopsticks")
         # TODO: Release both chopsticks.
         self.right_chopstick.semaforo.release()
+        self.log(f"Releasing {self.right_chopstick.name}")
         self.left_chopstick.semaforo.release()
+        self.log(f"Releasing {self.left_chopstick.name}")
         self.log("Released chopsticks")
 
     def eat(self):
@@ -81,36 +78,40 @@ class Philosopher():
             self.eat()
 
     def log(self, msg):
-        print(f"{self.color.value}{datetime.utcnow().isoformat(sep=' ', timespec='microseconds')}|{self.name}|{msg}{C.Reset.value}")
-
-    
-    
-
-# TODO: Define Chopstick type (like Semaphore or BoundedSemaphore).
-# https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Semaphore
-# https://docs.python.org/3/library/multiprocessing.html#multiprocessing.BoundedSemaphore
+        print(
+            f"{self.color.value}{datetime.utcnow().isoformat(sep=' ', timespec='microseconds')}|{self.name}|{msg}{C.Reset.value}"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("START OF PROGRAM")
 
-    c1 = Chopstick(mp.Semaphore(), 'Chopstick 1')
-    c2 = Chopstick(mp.Semaphore(), 'Chopstick 2')
+    n = int(input("ingresa un numero: \n"))
 
-    phil1 = Philosopher("P1", C.Green, right_chopstick=c1, left_chopstick=c2)
-    # TODO: start phil1.
-    proc1 = mp.Process(target = phil1.run)
-     
-    
-    phil2 = Philosopher("P2", C.Magenta, right_chopstick=c2, left_chopstick=c1)
-    # TODO: start phil2.
-    proc2 = mp.Process(target = phil2.run)
-    proc2.start()
-    proc1.start()
-    
-    # TODO: wait for all to finish.
-    proc1.join()
-    proc2.join()
-    
+    Chopsticks = [Chopstick(mp.Semaphore(), f"chopstick {i}") for i in range(n)]
+
+    filosofos = []
+
+    for i in range(n):
+        r = i
+        if (
+            i == len(Chopsticks) - 1
+        ):  # * evalua si el palillo izquierdo es el ultimo de la lista, y lo toma como el primero
+            l = 0
+        else:
+            l = i + 1  # * si no le asigna el siguiente
+            print(f"left {l}, right {r}")
+        phil = Philosopher(
+            f"P{i+1}",
+            list(C)[i],
+            right_chopstick=Chopsticks[r],
+            left_chopstick=Chopsticks[l],
+        )
+        proc = mp.Process(target=phil.run)
+        filosofos.append(proc)
+        proc.start()
+
+    for i in filosofos:
+        i.join()
 
     print("END OF PROGRAM")
